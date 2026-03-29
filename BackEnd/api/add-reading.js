@@ -10,16 +10,16 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { device_id, temperature, heart_rate } = req.body;
+  const { device_id, value } = req.body;
 
-  if (!device_id || temperature === undefined || heart_rate === undefined) {
-    return res.status(400).json({ error: "All fields are required" });
+  if (!device_id || value === undefined) {
+    return res.status(400).json({ error: "device_id and value are required" });
   }
 
   try {
     const { data, error } = await supabase
       .from("device_readings")
-      .insert([{ device_id, temperature, heart_rate }]);
+      .insert([{ device_id, value }]);
 
     if (error) {
       console.error("Supabase error:", error);
