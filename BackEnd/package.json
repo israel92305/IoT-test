@@ -1,0 +1,29 @@
+{
+  "name": "iot-test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/israel92305/IoT-test.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/israel92305/IoT-test/issues"
+  },
+  "homepage": "https://github.com/israel92305/IoT-test#readme",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.100.1",
+    "axios": "^1.14.0",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "uuid": "^13.0.0"
+  }
+}
