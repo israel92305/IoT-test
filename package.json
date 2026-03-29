@@ -1,0 +1,24 @@
+{
+  "name": "iot-test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "simulator.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/israel92305/IoT-test.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/israel92305/IoT-test/issues"
+  },
+  "homepage": "https://github.com/israel92305/IoT-test#readme",
+  "dependencies": {
+    "axios": "^1.14.0"
+  }
+}
