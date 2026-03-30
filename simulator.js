@@ -1,4 +1,4 @@
-// const axios = require("axios")
+// import axios from "axios" (ES module replacing the old require)
 import axios from "axios";
 
 // before (local testing)
@@ -6,9 +6,11 @@ import axios from "axios";
 
 // after (live backend)
 const URL = "https://medintel-iot-backend.vercel.app/api/add-reading";
-//check the simulatior file to see if to beging running or not
+
+// checks Supabase via the toggle-simulator route to see if simulator should run
 const STATUS_URL = "https://medintel-iot-backend.vercel.app/api/toggle-simulator";
-//All the clinic devices we will be simulating
+
+// All the clinic devices we will be simulating
 const devices = [
     { device_id: "device001", type: "heart_rate" },
     { device_id: "device002", type: "heart_rate" },
@@ -19,6 +21,7 @@ const devices = [
     { device_id: "device007", type: "glucose_monitor" }
 ];
 
+// checks Supabase settings table for simulator_running value
 async function isSimulatorRunning() {
     try {
         const res = await axios.get(STATUS_URL);
@@ -28,6 +31,7 @@ async function isSimulatorRunning() {
     }
 }
 
+// checks status before every send — if paused, skips sending
 async function sendReading() {
     const running = await isSimulatorRunning();
     if (!running) {
@@ -35,6 +39,7 @@ async function sendReading() {
         return;
     }
 
+    //Foreach device simulate the data
     devices.forEach(device => {
         let value;
         if (device.type === "heart_rate") {
@@ -42,6 +47,7 @@ async function sendReading() {
         } else if (device.type === "blood_pressure") {
             value = Math.floor(Math.random() * (140 - 80 + 1)) + 80;
         } else if (device.type === "temperature_sensor") {
+            // fixed: parseFloat used so value is a number not a string
             value = parseFloat((Math.random() * (38 - 36) + 36).toFixed(1));
         } else if (device.type === "oxygen_sensor") {
             value = Math.floor(Math.random() * (100 - 90 + 1)) + 90;
@@ -55,4 +61,5 @@ async function sendReading() {
     });
 }
 
+// send reading every 3 seconds
 setInterval(sendReading, 3000);

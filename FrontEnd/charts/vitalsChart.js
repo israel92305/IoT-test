@@ -19,6 +19,8 @@ const style = document.createElement("style");
 style.textContent = `
     @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
 
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
         background: ${COLORS.bg};
         margin: 0;
@@ -46,6 +48,72 @@ style.textContent = `
         color: #4A9FD4;
         font-family: 'IBM Plex Mono', monospace;
     }
+
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .sim-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .sim-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 12px;
+        border-radius: 5px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: transparent;
+    }
+
+    #startBtn {
+        border: 1px solid #48C9A9;
+        color: #48C9A9;
+    }
+
+    #startBtn:hover {
+        background: #48C9A9;
+        color: #0B1623;
+    }
+
+    #stopBtn {
+        border: 1px solid #E05C6A;
+        color: #E05C6A;
+    }
+
+    #stopBtn:hover {
+        background: #E05C6A;
+        color: #fff;
+    }
+
+    .btn-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    #sim-status {
+        font-size: 10px;
+        font-family: 'IBM Plex Mono', monospace;
+        letter-spacing: 0.08em;
+        padding-left: 10px;
+        border-left: 1px solid rgba(255,255,255,0.1);
+        transition: color 0.3s;
+    }
+
+    #sim-status.running { color: #48C9A9; }
+    #sim-status.paused  { color: #E05C6A; }
 
     .live-badge {
         display: flex;
@@ -136,11 +204,22 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-const container = document.getElementById("vitalsChart").parentElement;
+const container = document.getElementById("chart-container");
 container.innerHTML = `
     <div class="dashboard-header">
         <span class="dashboard-title">Patient Vitals Monitor</span>
-        <span class="live-badge"><span class="live-dot"></span>LIVE</span>
+        <div class="header-right">
+            <div class="sim-controls">
+                <button class="sim-btn" id="startBtn" onclick="controlSimulator('start')">
+                    <span class="btn-dot"></span> Start
+                </button>
+                <button class="sim-btn" id="stopBtn" onclick="controlSimulator('stop')">
+                    <span class="btn-dot"></span> Stop
+                </button>
+                <span id="sim-status" class="running">Running</span>
+            </div>
+            <span class="live-badge"><span class="live-dot"></span>LIVE</span>
+        </div>
     </div>
     <div class="vitals-grid">
         ${Object.entries(VITALS_CONFIG).map(([key, cfg]) => `
@@ -226,6 +305,27 @@ const vitalsChart = new Chart(mainCtx, {
         }
     }
 });
+
+window.controlSimulator = async function(action) {
+    try {
+        const res = await fetch("https://medintel-iot-backend.vercel.app/api/toggle-simulator", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action })
+        });
+        const data = await res.json();
+        const status = document.getElementById("sim-status");
+        if (data.isRunning) {
+            status.textContent = "Running";
+            status.className = "running";
+        } else {
+            status.textContent = "Paused";
+            status.className = "paused";
+        }
+    } catch (err) {
+        console.error("Error:", err);
+    }
+}
 
 let vitalsHistory = [];
 

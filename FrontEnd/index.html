@@ -6,71 +6,8 @@
     <title>MedIntel Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
     <script src="charts/vitalsChart.js" defer></script>
-    <style>
-        #simulator-controls {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        #simulator-controls button {
-            padding: 8px 20px;
-            border: none;
-            border-radius: 6px;
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 12px;
-            letter-spacing: 0.08em;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-
-        #simulator-controls button:hover {
-            opacity: 0.8;
-        }
-
-        #startBtn {
-            background: #48C9A9;
-            color: #0B1623;
-        }
-
-        #stopBtn {
-            background: #E05C6A;
-            color: #fff;
-        }
-
-        #sim-status {
-            font-size: 11px;
-            font-family: 'IBM Plex Mono', monospace;
-            color: rgba(255, 255, 255, 0.4);
-            letter-spacing: 0.08em;
-        }
-    </style>
 </head>
 <body>
-    <div id="simulator-controls">
-        <button id="startBtn" onclick="controlSimulator('start')">▶ Start Simulator</button>
-        <button id="stopBtn" onclick="controlSimulator('stop')">■ Stop Simulator</button>
-        <span id="sim-status">Status: Running</span>
-    </div>
-
-    <canvas id="vitalsChart" width="600" height="400"></canvas>
-
-    <script>
-        async function controlSimulator(action) {
-            try {
-                const res = await fetch("https://medintel-iot-backend.vercel.app/api/toggle-simulator", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ action })
-                });
-                const data = await res.json();
-                document.getElementById("sim-status").textContent =
-                    `Status: ${data.isRunning ? "Running" : "Paused"}`;
-            } catch (err) {
-                console.error("Error:", err);
-            }
-        }
-    </script>
+    <div id="chart-container"></div>
 </body>
 </html>
