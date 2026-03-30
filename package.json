@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/israel92305/IoT-test#readme",
   "dependencies": {
+    "@supabase/supabase-js": "^2.100.1",
     "axios": "^1.14.0"
   }
 }

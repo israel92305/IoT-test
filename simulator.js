@@ -5,6 +5,7 @@ const axios = require("axios")
 
 // after (live backend)
 const URL = "https://medintel-iot-backend.vercel.app/api/add-reading";
+
 //All the clinic devices we will be simulating
 const devices = [
     { device_id: "device001", type: "heart_rate" },

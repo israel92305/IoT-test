@@ -6,29 +6,29 @@ const supabase = createClient(
 );
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
-  const { device_id, value } = req.body;
-
-  if (!device_id || value === undefined) {
-    return res.status(400).json({ error: "device_id and value are required" });
-  }
-
   try {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method not allowed" });
+    }
+
+    const { device_id, value } = req.body;
+
+    if (!device_id || value === undefined) {
+      return res.status(400).json({ error: "device_id and value are required" });
+    }
+
     const { data, error } = await supabase
       .from("device_readings")
       .insert([{ device_id, value }]);
 
     if (error) {
-      console.error("Supabase error:", error);
+      console.log("Supabase insert error:", error);
       return res.status(500).json({ error: error.message });
     }
 
     res.status(200).json({ message: "Reading added", data });
   } catch (err) {
-    console.error("Backend error:", err);
+    console.log("Catch error:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 }
