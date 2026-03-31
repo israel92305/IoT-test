@@ -329,14 +329,35 @@ window.dismissAlert = function() {
 }
 
 window.callEmergency = function() {
-    // Flash screen red to signal emergency
-    document.body.style.transition = "background 0.2s";
-    document.body.style.background = "rgba(224, 92, 106, 0.15)";
-    setTimeout(() => {
-        document.body.style.background = "#0B1623";
-    }, 600);
-
-    // In a real system this would trigger a call or pager
-    alert("🚨 Emergency services have been notified. Please proceed with emergency protocol.");
-    overlay.classList.remove("active");
+    // Replace the modal content with the advisory message
+    document.getElementById("critical-modal").innerHTML = `
+        <div class="alert-header">
+            <div class="alert-icon">!</div>
+            <div>
+                <div class="alert-title">Emergency Advisory</div>
+                <div class="alert-subtitle">MedIntel Sentinel recommendation</div>
+            </div>
+        </div>
+        <div class="alert-summary">
+            Based on the patient's current vitals, Sentinel strongly advises that emergency medical services be contacted immediately. Please assess the situation and act according to your medical protocol.
+        </div>
+        <div style="
+            margin: 16px 0 24px;
+            padding: 12px;
+            background: rgba(224,92,106,0.06);
+            border: 1px solid rgba(224,92,106,0.2);
+            border-radius: 6px;
+            font-size: 10px;
+            color: rgba(255,255,255,0.5);
+            letter-spacing: 0.06em;
+            line-height: 1.7;
+        ">
+            ⚠ This is an AI-generated advisory only. The decision to call emergency services remains at the discretion of the attending medical professional.
+        </div>
+        <div class="alert-actions">
+            <button class="btn-dismiss" onclick="dismissAlert()" style="flex:1; border-color:#E05C6A; color:#E05C6A;">
+                Understood — Dismiss
+            </button>
+        </div>
+    `;
 }
