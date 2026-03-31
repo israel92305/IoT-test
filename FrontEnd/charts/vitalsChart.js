@@ -15,194 +15,13 @@ const COLORS = {
     legendText: "#CBD5E1",
 };
 
-const style = document.createElement("style");
-style.textContent = `
-    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+const STATUS_COLORS = {
+    normal:   { border: "#1E3048", glow: "none",                          badge: null },
+    warning:  { border: "#F0A500", glow: "0 0 12px rgba(240,165,0,0.3)",  badge: "#F0A500" },
+    critical: { border: "#E05C6A", glow: "0 0 16px rgba(224,92,106,0.4)", badge: "#E05C6A" }
+};
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-        background: ${COLORS.bg};
-        margin: 0;
-        padding: 24px;
-        font-family: 'IBM Plex Sans', sans-serif;
-        color: #CBD5E1;
-        min-height: 100vh;
-        box-sizing: border-box;
-    }
-
-    .dashboard-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 28px;
-        padding-bottom: 16px;
-        border-bottom: 1px solid ${COLORS.border};
-    }
-
-    .dashboard-title {
-        font-size: 13px;
-        font-weight: 500;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: #4A9FD4;
-        font-family: 'IBM Plex Mono', monospace;
-    }
-
-    .header-right {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-    }
-
-    .sim-controls {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .sim-btn {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 5px 12px;
-        border-radius: 5px;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10px;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        cursor: pointer;
-        transition: all 0.2s;
-        background: transparent;
-    }
-
-    #startBtn {
-        border: 1px solid #48C9A9;
-        color: #48C9A9;
-    }
-
-    #startBtn:hover {
-        background: #48C9A9;
-        color: #0B1623;
-    }
-
-    #stopBtn {
-        border: 1px solid #E05C6A;
-        color: #E05C6A;
-    }
-
-    #stopBtn:hover {
-        background: #E05C6A;
-        color: #fff;
-    }
-
-    .btn-dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: currentColor;
-    }
-
-    #sim-status {
-        font-size: 10px;
-        font-family: 'IBM Plex Mono', monospace;
-        letter-spacing: 0.08em;
-        padding-left: 10px;
-        border-left: 1px solid rgba(255,255,255,0.1);
-        transition: color 0.3s;
-    }
-
-    #sim-status.running { color: #48C9A9; }
-    #sim-status.paused  { color: #E05C6A; }
-
-    .live-badge {
-        display: flex;
-        align-items: center;
-        gap: 7px;
-        font-size: 11px;
-        font-family: 'IBM Plex Mono', monospace;
-        color: #48C9A9;
-        letter-spacing: 0.08em;
-    }
-
-    .live-dot {
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: #48C9A9;
-        animation: pulse 1.8s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-        0%, 100% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.4; transform: scale(0.8); }
-    }
-
-    .vitals-grid {
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 12px;
-        margin-bottom: 24px;
-    }
-
-    .vital-card {
-        background: ${COLORS.panel};
-        border: 1px solid ${COLORS.border};
-        border-radius: 10px;
-        padding: 14px 16px;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .vital-card::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 2px;
-        background: var(--accent);
-    }
-
-    .vital-label {
-        font-size: 10px;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: rgba(255,255,255,0.4);
-        margin-bottom: 6px;
-        font-family: 'IBM Plex Mono', monospace;
-    }
-
-    .vital-value {
-        font-size: 26px;
-        font-weight: 300;
-        color: var(--accent);
-        font-family: 'IBM Plex Mono', monospace;
-        line-height: 1;
-    }
-
-    .vital-unit {
-        font-size: 11px;
-        color: rgba(255,255,255,0.3);
-        margin-top: 4px;
-        font-family: 'IBM Plex Mono', monospace;
-    }
-
-    .chart-panel {
-        background: ${COLORS.panel};
-        border: 1px solid ${COLORS.border};
-        border-radius: 10px;
-        padding: 20px;
-    }
-
-    .chart-panel-title {
-        font-size: 10px;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: rgba(255,255,255,0.3);
-        margin-bottom: 16px;
-        font-family: 'IBM Plex Mono', monospace;
-    }
-`;
-document.head.appendChild(style);
+// ── Build HTML layout ─────────────────────────────────────────────
 
 const container = document.getElementById("chart-container");
 container.innerHTML = `
@@ -210,6 +29,9 @@ container.innerHTML = `
         <span class="dashboard-title">Patient Vitals Monitor</span>
         <div class="header-right">
             <div class="sim-controls">
+                <button class="sim-btn" id="analyzeBtn" onclick="runSentinel()">
+                    <span class="btn-dot"></span> Analyze
+                </button>
                 <button class="sim-btn" id="startBtn" onclick="controlSimulator('start')">
                     <span class="btn-dot"></span> Start
                 </button>
@@ -221,12 +43,14 @@ container.innerHTML = `
             <span class="live-badge"><span class="live-dot"></span>LIVE</span>
         </div>
     </div>
+    <div id="sentinel-summary"></div>
     <div class="vitals-grid">
         ${Object.entries(VITALS_CONFIG).map(([key, cfg]) => `
             <div class="vital-card" style="--accent: ${cfg.color}" id="card-${key}">
                 <div class="vital-label">${cfg.label}</div>
                 <div class="vital-value" id="val-${key}">--</div>
                 <div class="vital-unit">${cfg.unit}</div>
+                <div class="sentinel-msg" id="sentinel-${key}"></div>
             </div>
         `).join("")}
     </div>
@@ -235,6 +59,32 @@ container.innerHTML = `
         <canvas id="mainChart"></canvas>
     </div>
 `;
+
+// ── Critical alert overlay ────────────────────────────────────────
+
+const overlay = document.createElement("div");
+overlay.id = "critical-overlay";
+overlay.innerHTML = `
+    <div id="critical-modal">
+        <div class="alert-header">
+            <div class="alert-icon">!</div>
+            <div>
+                <div class="alert-title">Critical Alert — Immediate Attention Required</div>
+                <div class="alert-subtitle">MedIntel Sentinel has detected a critical patient state</div>
+            </div>
+        </div>
+        <div class="alert-summary" id="alert-summary"></div>
+        <div class="alert-vitals" id="alert-vitals"></div>
+        <div class="alert-recommendation" id="alert-recommendation"></div>
+        <div class="alert-actions">
+            <button class="btn-emergency" onclick="callEmergency()">🚨 Call Emergency</button>
+            <button class="btn-dismiss" onclick="dismissAlert()">Dismiss</button>
+        </div>
+    </div>
+`;
+document.body.appendChild(overlay);
+
+// ── Chart.js setup ────────────────────────────────────────────────
 
 const mainCtx = document.getElementById("mainChart").getContext("2d");
 
@@ -296,36 +146,13 @@ const vitalsChart = new Chart(mainCtx, {
             }
         },
         elements: {
-            line: {
-                tension: 0.4,
-                borderWidth: 1.5,
-                spanGaps: true
-            },
+            line: { tension: 0.4, borderWidth: 1.5, spanGaps: true },
             point: { radius: 0, hoverRadius: 4 }
         }
     }
 });
 
-window.controlSimulator = async function(action) {
-    try {
-        const res = await fetch("https://medintel-iot-backend.vercel.app/api/toggle-simulator", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action })
-        });
-        const data = await res.json();
-        const status = document.getElementById("sim-status");
-        if (data.isRunning) {
-            status.textContent = "Running";
-            status.className = "running";
-        } else {
-            status.textContent = "Paused";
-            status.className = "paused";
-        }
-    } catch (err) {
-        console.error("Error:", err);
-    }
-}
+// ── Vitals fetch & chart update ───────────────────────────────────
 
 let vitalsHistory = [];
 
@@ -341,8 +168,9 @@ function updateChart(data) {
     if (vitalsHistory.length > 20) vitalsHistory = vitalsHistory.slice(-20);
 
     const keys = Object.keys(VITALS_CONFIG);
-
     const latest = vitalsHistory[vitalsHistory.length - 1];
+
+    // Update vital cards with latest values
     keys.forEach(key => {
         const el = document.getElementById(`val-${key}`);
         if (el && latest[key] !== undefined) {
@@ -352,6 +180,7 @@ function updateChart(data) {
         }
     });
 
+    // Update chart datasets
     vitalsChart.data.labels = vitalsHistory.map(d => d.time);
     vitalsChart.data.datasets = keys.map(key => ({
         label: VITALS_CONFIG[key].label,
@@ -378,3 +207,136 @@ async function fetchVitals() {
 
 setInterval(fetchVitals, 3000);
 fetchVitals();
+
+// ── Simulator controls ────────────────────────────────────────────
+
+window.controlSimulator = async function(action) {
+    try {
+        const res = await fetch("https://medintel-iot-backend.vercel.app/api/toggle-simulator", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action })
+        });
+        const data = await res.json();
+        const status = document.getElementById("sim-status");
+        if (data.isRunning) {
+            status.textContent = "Running";
+            status.className = "running";
+        } else {
+            status.textContent = "Paused";
+            status.className = "paused";
+        }
+    } catch (err) {
+        console.error("Error:", err);
+    }
+}
+
+// ── Sentinel AI Analysis ──────────────────────────────────────────
+
+function applySentinel(analysis) {
+    // Update each vital card with status and message
+    Object.entries(analysis.vitals).forEach(([key, result]) => {
+        const card = document.getElementById(`card-${key}`);
+        const msg = document.getElementById(`sentinel-${key}`);
+        if (!card || !msg) return;
+
+        const cfg = STATUS_COLORS[result.status] || STATUS_COLORS.normal;
+        card.style.borderColor = cfg.border;
+        card.style.boxShadow = cfg.glow;
+        msg.textContent = result.message;
+        msg.style.color = cfg.badge || "rgba(255,255,255,0.4)";
+    });
+
+    // Show critical popup once after all cards updated
+    showCriticalAlert(analysis);
+
+    // Update summary bar
+    const bar = document.getElementById("sentinel-summary");
+    const overall = analysis.overall_status;
+    const barColors = {
+        normal:   { bg: "rgba(72,201,169,0.08)",  border: "#48C9A9", color: "#48C9A9", icon: "✓" },
+        warning:  { bg: "rgba(240,165,0,0.08)",   border: "#F0A500", color: "#F0A500", icon: "⚠" },
+        critical: { bg: "rgba(224,92,106,0.1)",   border: "#E05C6A", color: "#E05C6A", icon: "!" }
+    };
+    const bc = barColors[overall] || barColors.normal;
+    bar.style.display = "block";
+    bar.style.background = bc.bg;
+    bar.style.borderColor = bc.border;
+    bar.style.color = bc.color;
+    bar.innerHTML = `
+        <strong>${bc.icon} ${overall.toUpperCase()}</strong> — ${analysis.summary}
+        <div style="margin-top:6px; color: rgba(255,255,255,0.5); font-size:10px;">
+            💊 ${analysis.recommendation}
+        </div>
+    `;
+}
+
+window.runSentinel = async function() {
+    const btn = document.getElementById("analyzeBtn");
+    btn.innerHTML = `<span class="btn-dot"></span> Analyzing...`;
+    btn.style.opacity = "0.6";
+    btn.style.pointerEvents = "none";
+
+    try {
+        const res = await fetch("https://medintel-iot-backend.vercel.app/api/sentinel");
+        const analysis = await res.json();
+        applySentinel(analysis);
+    } catch (err) {
+        console.error("Sentinel error:", err);
+    } finally {
+        btn.innerHTML = `<span class="btn-dot"></span> Analyze`;
+        btn.style.opacity = "1";
+        btn.style.pointerEvents = "auto";
+    }
+}
+
+// Auto analyze every 30 seconds to avoid Gemini quota limits
+setInterval(runSentinel, 30000);
+
+// Run once on load after chart has time to populate
+setTimeout(runSentinel, 4000);
+
+// ── Critical Alert Popup ──────────────────────────────────────────
+
+function showCriticalAlert(analysis) {
+    // Only fire for critical status
+    if (analysis.overall_status !== "critical") return;
+
+    // Populate summary
+    document.getElementById("alert-summary").textContent = analysis.summary;
+
+    // Populate only critical vitals
+    const vitalsContainer = document.getElementById("alert-vitals");
+    vitalsContainer.innerHTML = "";
+    Object.entries(analysis.vitals).forEach(([key, result]) => {
+        if (result.status !== "critical") return;
+        const label = VITALS_CONFIG[key]?.label || key;
+        const row = document.createElement("div");
+        row.className = "alert-vital-row";
+        row.innerHTML = `<span class="vital-dot"></span><span><strong>${label}</strong> — ${result.message}</span>`;
+        vitalsContainer.appendChild(row);
+    });
+
+    // Populate recommendation
+    document.getElementById("alert-recommendation").textContent = `💊 ${analysis.recommendation}`;
+
+    // Show overlay
+    overlay.classList.add("active");
+}
+
+window.dismissAlert = function() {
+    overlay.classList.remove("active");
+}
+
+window.callEmergency = function() {
+    // Flash screen red to signal emergency
+    document.body.style.transition = "background 0.2s";
+    document.body.style.background = "rgba(224, 92, 106, 0.15)";
+    setTimeout(() => {
+        document.body.style.background = "#0B1623";
+    }, 600);
+
+    // In a real system this would trigger a call or pager
+    alert("🚨 Emergency services have been notified. Please proceed with emergency protocol.");
+    overlay.classList.remove("active");
+}
