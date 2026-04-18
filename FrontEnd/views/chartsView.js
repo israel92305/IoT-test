@@ -1,84 +1,126 @@
 // chartsView.js
-// This is the VIEW responsible for all chart rendering
-// Its only job is to initialise and update Chart.js charts
-// No fetch calls here — it just receives data and draws it
+// Owns all Chart.js rendering
+// Single chart with multiple vital lines
 
-// Keeps track of all active chart instances so we can update them later
-let chartInstances = {};
+const VITALS_CONFIG = {
+    heart_rate:        { label: "Heart Rate",        color: "#E05C6A", unit: "bpm"   },
+    blood_pressure:    { label: "Blood Pressure",    color: "#4A9FD4", unit: "mmHg"  },
+    oxygen_saturation: { label: "Oxygen Saturation", color: "#48C9A9", unit: "%"     },
+    temperature:       { label: "Temperature",       color: "#F0A500", unit: "°C"    },
+    glucose:           { label: "Glucose",           color: "#A78BFA", unit: "mg/dL" },
+};
+
+const COLORS = {
+    bg:         "#0B1623",
+    panel:      "#111E2E",
+    border:     "#1E3048",
+    gridLine:   "rgba(255,255,255,0.04)",
+    tickColor:  "rgba(255,255,255,0.35)",
+    legendText: "#CBD5E1",
+};
+
+// Holds the single Chart.js instance
+let chartInstance = null;
 
 /**
- * Initialises a single line chart on a canvas element
- * Creates the chart with empty data — updateChart() fills it later
- * @param {string} canvasId - The ID of the <canvas> element in index.html
- * @param {string} label    - The label shown in the chart legend
- * @param {string} color    - RGB values as a string e.g. "255, 99, 132"
+ * Initialises the single multi-line vitals chart
+ * One dataset per vital sign, all on the same canvas
  * Called by: FrontEnd/controllers/dashboardController.js
  */
-export function initChart(canvasId, label, color) {
-  const ctx = document.getElementById(canvasId)?.getContext("2d");
+export function initChart() {
+    const ctx = document.getElementById("vitalsChart")?.getContext("2d");
+    if (!ctx) return null;
 
-  // If the canvas element doesn't exist in the HTML, skip it
-  if (!ctx) return null;
+    if (chartInstance) chartInstance.destroy();
 
-  // If a chart already exists on this canvas, destroy it first
-  if (chartInstances[canvasId]) {
-    chartInstances[canvasId].destroy();
-  }
+    // Build one dataset per vital type
+    const datasets = Object.entries(VITALS_CONFIG).map(([key, cfg]) => ({
+        label:            cfg.label,
+        data:             [],
+        borderColor:      cfg.color,
+        backgroundColor:  cfg.color + "18",
+        borderWidth:      1.5,
+        pointRadius:      2,
+        pointHoverRadius: 5,
+        tension:          0.4,
+        fill:             false,
+        // spanGaps fills in the line across missing data points
+        // so lines don't break when a timestamp is missing a vital
+        spanGaps:         true,
+    }));
 
-  // Create the Chart.js instance with our medical dashboard styling
-  const chart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: [],
-      datasets: [
-        {
-          label,
-          data: [],
-          borderColor: `rgb(${color})`,
-          backgroundColor: `rgba(${color}, 0.1)`,
-          tension: 0.4,
-          fill: true,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      // Disable animation so live updates feel instant
-      animation: false,
-      scales: {
-        x: { ticks: { color: "#ccc" }, grid: { color: "#333" } },
-        y: { ticks: { color: "#ccc" }, grid: { color: "#333" } },
-      },
-      plugins: {
-        legend: { labels: { color: "#ccc" } },
-      },
-    },
-  });
+    chartInstance = new Chart(ctx, {
+        type: "line",
+        data: { labels: [], datasets },
+        options: {
+            responsive: true,
+            animation:  false,
+            interaction: {
+                // Show all vitals tooltip at the same time point
+                mode:      "index",
+                intersect: false,
+            },
+            scales: {
+                x: {
+                    ticks: { color: COLORS.tickColor, font: { family: "IBM Plex Mono", size: 10 } },
+                    grid:  { color: COLORS.gridLine },
+                },
+                y: {
+                    ticks: { color: COLORS.tickColor, font: { family: "IBM Plex Mono", size: 10 } },
+                    grid:  { color: COLORS.gridLine },
+                },
+            },
+            plugins: {
+                legend: {
+                    labels: {
+                        color:    COLORS.legendText,
+                        font:     { family: "IBM Plex Mono", size: 10 },
+                        boxWidth: 12,
+                    },
+                },
+                tooltip: {
+                    backgroundColor: COLORS.panel,
+                    borderColor:     COLORS.border,
+                    borderWidth:     1,
+                    titleColor:      COLORS.legendText,
+                    bodyColor:       COLORS.tickColor,
+                    titleFont:       { family: "IBM Plex Mono", size: 11 },
+                    bodyFont:        { family: "IBM Plex Mono", size: 10 },
+                    callbacks: {
+                        label(ctx) {
+                            const key  = Object.keys(VITALS_CONFIG)[ctx.datasetIndex];
+                            const unit = VITALS_CONFIG[key]?.unit || "";
+                            const val  = ctx.parsed.y;
+                            // Show -- if value is missing at this time point
+                            return ` ${ctx.dataset.label}: ${val !== null ? val + " " + unit : "--"}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
 
-  // Store the instance so updateChart() can find it later
-  chartInstances[canvasId] = chart;
-  return chart;
+    return chartInstance;
 }
 
 /**
- * Updates an existing chart with fresh data from the API
- * @param {string} canvasId - Must match the ID used in initChart()
- * @param {Array}  readings - Array of grouped reading objects from the API
- * @param {string} dataKey  - The device type key to extract e.g. "heart_rate"
+ * Updates the chart with fresh readings from the API
+ * API keys match VITALS_CONFIG keys directly
+ * @param {Array} readings - Array of grouped reading objects from the API
  * Called by: FrontEnd/controllers/dashboardController.js
  */
-export function updateChart(canvasId, readings, dataKey) {
-  const chart = chartInstances[canvasId];
+export function updateChart(readings) {
+    if (!chartInstance) return;
 
-  // If the chart hasn't been initialised yet, skip
-  if (!chart) return;
+    // Set the time labels on the x axis
+    chartInstance.data.labels = readings.map(r => r.time);
 
-  // Update the time labels on the x axis
-  chart.data.labels = readings.map((r) => r.time);
+    // Update each dataset — null for missing values (spanGaps handles the line)
+    Object.keys(VITALS_CONFIG).forEach((vitalKey, index) => {
+        chartInstance.data.datasets[index].data = readings.map(r =>
+            r[vitalKey] !== undefined ? r[vitalKey] : null
+        );
+    });
 
-  // Update the data points — null if a reading doesn't have this device type
-  chart.data.datasets[0].data = readings.map((r) => r[dataKey] ?? null);
-
-  // Tell Chart.js to re-render
-  chart.update();
+    chartInstance.update();
 }

@@ -7,8 +7,7 @@ import { fetchLatestReadings } from "../models/readingModel.js";
 
 // Gemini API configuration
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 /**
  * Groups raw reading rows into the latest value per device type
  * Example output: { heart_rate: 72, blood_pressure: 120, ... }

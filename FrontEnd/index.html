@@ -1,73 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MedIntel Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedIntel Dashboard</title>
 
-  <!-- Stylesheet -->
-  <link rel="stylesheet" href="./style.css">
+    <!-- Original stylesheet -->
+    <link rel="stylesheet" href="./style.css">
 
-  <!-- Chart.js from CDN — must load before main.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- Main entry point — type="module" enables ES module imports -->
-  <script type="module" src="./main.js"></script>
+    <!-- Main entry point — type="module" enables ES module imports -->
+    <script type="module" src="./main.js"></script>
 </head>
 <body>
 
-  <h1>🏥 MedIntel Dashboard</h1>
-
-  <!-- Top bar — simulator toggle and live status -->
-  <div class="top-bar">
-    <button id="simulator-btn" class="btn-success">▶ Start Simulator</button>
-    <div class="status-indicator">
-      <div id="status-dot"></div>
-      <span id="status-label">Paused</span>
-    </div>
-  </div>
-
-  <!-- Vital sign charts -->
-  <!-- Each canvas ID must match the CHART_CONFIG ids in dashboardController.js -->
-  <div class="charts-grid">
-
-    <div class="chart-card">
-      <h2>Heart Rate</h2>
-      <canvas id="heartRateChart"></canvas>
-    </div>
-
-    <div class="chart-card">
-      <h2>Blood Pressure</h2>
-      <canvas id="bloodPressureChart"></canvas>
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="dashboard-title">MedIntel — Patient Monitoring</div>
+        <div class="header-right">
+            <div class="sim-controls">
+                <button class="sim-btn" id="startBtn">
+                    <span class="btn-dot"></span> Start
+                </button>
+                <button class="sim-btn" id="stopBtn">
+                    <span class="btn-dot"></span> Stop
+                </button>
+                <span id="sim-status" class="paused">PAUSED</span>
+            </div>
+            <button class="sim-btn" id="analyzeBtn">
+                <span class="btn-dot"></span> Analyse
+            </button>
+            <div class="live-badge">
+                <div class="live-dot"></div> Live
+            </div>
+        </div>
     </div>
 
-    <div class="chart-card">
-      <h2>Temperature</h2>
-      <canvas id="temperatureChart"></canvas>
+    <!-- Sentinel summary bar -->
+    <div id="sentinel-summary"></div>
+
+    <!-- Vital sign cards -->
+    <div class="vitals-grid">
+        <div class="vital-card" style="--accent:#48C9A9">
+            <div class="vital-label">Heart Rate</div>
+            <div class="vital-value" id="val-heart_rate">--</div>
+            <div class="vital-unit">bpm</div>
+            <div class="sentinel-msg" id="msg-heart_rate"></div>
+        </div>
+        <div class="vital-card" style="--accent:#4A9FD4">
+            <div class="vital-label">Blood Pressure</div>
+            <div class="vital-value" id="val-blood_pressure">--</div>
+            <div class="vital-unit">mmHg</div>
+            <div class="sentinel-msg" id="msg-blood_pressure"></div>
+        </div>
+        <div class="vital-card" style="--accent:#F0A500">
+            <div class="vital-label">Temperature</div>
+            <div class="vital-value" id="val-temperature_sensor">--</div>
+            <div class="vital-unit">°C</div>
+            <div class="sentinel-msg" id="msg-temperature"></div>
+        </div>
+        <div class="vital-card" style="--accent:#A78BFA">
+            <div class="vital-label">Oxygen Sat.</div>
+            <div class="vital-value" id="val-oxygen_sensor">--</div>
+            <div class="vital-unit">%</div>
+            <div class="sentinel-msg" id="msg-oxygen_saturation"></div>
+        </div>
+        <div class="vital-card" style="--accent:#F472B6">
+            <div class="vital-label">Glucose</div>
+            <div class="vital-value" id="val-glucose_monitor">--</div>
+            <div class="vital-unit">mg/dL</div>
+            <div class="sentinel-msg" id="msg-glucose"></div>
+        </div>
     </div>
 
-    <div class="chart-card">
-      <h2>Oxygen Saturation</h2>
-      <canvas id="oxygenChart"></canvas>
+    <!-- Chart -->
+    <div class="chart-panel">
+        <div class="chart-panel-title">Vitals Over Time</div>
+        <canvas id="vitalsChart"></canvas>
     </div>
 
-    <div class="chart-card">
-      <h2>Glucose</h2>
-      <canvas id="glucoseChart"></canvas>
+    <!-- Critical alert popup -->
+    <div id="critical-overlay">
+        <div id="critical-modal">
+            <div class="alert-header">
+                <div class="alert-icon">⚠️</div>
+                <div>
+                    <div class="alert-title">Critical Alert</div>
+                    <div class="alert-subtitle">Immediate attention required</div>
+                </div>
+            </div>
+            <div class="alert-summary" id="alert-summary"></div>
+            <div class="alert-vitals" id="alert-vitals"></div>
+            <div class="alert-recommendation" id="alert-recommendation"></div>
+            <div class="alert-actions">
+                <button class="btn-emergency">🚨 Notify Emergency Team</button>
+                <button class="btn-dismiss" id="dismissAlert">Dismiss</button>
+            </div>
+        </div>
     </div>
-
-  </div>
-
-  <!-- Sentinel AI analysis panel -->
-  <div>
-    <div style="display:flex; align-items:center; gap:16px; margin-bottom:12px;">
-      <h2 style="margin:0">🤖 Sentinel AI Analysis</h2>
-      <button id="sentinel-btn" class="btn-success">Run Analysis</button>
-    </div>
-    <div id="sentinel-panel">
-      <p class="sentinel-loading">Press "Run Analysis" to analyse current vitals.</p>
-    </div>
-  </div>
 
 </body>
 </html>

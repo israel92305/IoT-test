@@ -3,94 +3,117 @@
 // It is the brain — it calls the model to get data and tells the views what to render
 // No fetch calls here, no DOM manipulation here — just coordination
 
-import { getReadings, getSentinelAnalysis, getSimulatorStatus, toggleSimulator } from "../models/apiModel.js";
+import {
+  getReadings,
+  getSentinelAnalysis,
+  getSimulatorStatus,
+  toggleSimulator,
+} from "../models/apiModel.js";
 import { initChart, updateChart } from "../views/chartsView.js";
-import { showSentinelLoading, renderSentinelAnalysis, renderSentinelError } from "../views/sentinelView.js";
-import { updateSimulatorButton, updateStatusIndicator, showToast } from "../views/dashboardView.js";
-
-// Chart configuration — one entry per vital sign
-// Each entry maps a canvas ID to its label, colour and API data key
-const CHART_CONFIG = [
-  { id: "heartRateChart",     label: "Heart Rate (bpm)",      color: "255, 99, 132",  key: "heart_rate" },
-  { id: "bloodPressureChart", label: "Blood Pressure (mmHg)", color: "54, 162, 235",  key: "blood_pressure" },
-  { id: "temperatureChart",   label: "Temperature (°C)",      color: "255, 206, 86",  key: "temperature_sensor" },
-  { id: "oxygenChart",        label: "Oxygen Saturation (%)", color: "75, 192, 192",  key: "oxygen_sensor" },
-  { id: "glucoseChart",       label: "Glucose (mg/dL)",       color: "153, 102, 255", key: "glucose_monitor" },
-];
+import {
+  showSentinelLoading,
+  renderSentinelAnalysis,
+  renderSentinelError,
+} from "../views/sentinelView.js";
+import { updateSimulatorStatus, showToast } from "../views/dashboardView.js";
 
 // Stores the polling interval so we can stop it if needed
 let pollingInterval = null;
 
 /**
  * Initialises the entire dashboard
- * 1. Sets up all charts
+ * 1. Sets up the single multi-line chart
  * 2. Loads the simulator status
- * 3. Binds button click events
+ * 3. Binds all button click events
  * 4. Starts the live data polling loop
  * Called by: FrontEnd/main.js
  */
 export async function initDashboard() {
-  // Initialise all chart canvases with empty data
-  CHART_CONFIG.forEach(({ id, label, color }) => initChart(id, label, color));
+  // Initialise the single multi-line vitals chart
+  initChart();
 
-  // Load the current simulator status and update the button accordingly
+  // Load the current simulator status and update the UI accordingly
   try {
     const isRunning = await getSimulatorStatus();
-    updateSimulatorButton(isRunning);
-    updateStatusIndicator(isRunning);
+    updateSimulatorStatus(isRunning);
   } catch {
     showToast("Could not reach simulator status", "error");
   }
 
-  // Bind the simulator toggle button click event
-  const simulatorBtn = document.getElementById("simulator-btn");
-  if (simulatorBtn) simulatorBtn.addEventListener("click", handleSimulatorToggle);
+  // Bind the Start button
+  const startBtn = document.getElementById("startBtn");
+  if (startBtn)
+    startBtn.addEventListener("click", () => handleSimulatorToggle("start"));
 
-  // Bind the Sentinel refresh button click event
-  const sentinelBtn = document.getElementById("sentinel-btn");
-  if (sentinelBtn) sentinelBtn.addEventListener("click", handleSentinelRefresh);
+  // Bind the Stop button
+  const stopBtn = document.getElementById("stopBtn");
+  if (stopBtn)
+    stopBtn.addEventListener("click", () => handleSimulatorToggle("stop"));
 
-  // Do an immediate chart refresh then start polling every 5 seconds
+  // Bind the Analyse button
+  const analyzeBtn = document.getElementById("analyzeBtn");
+  if (analyzeBtn) analyzeBtn.addEventListener("click", handleSentinelRefresh);
+
+  // Bind the dismiss button on the critical alert popup
+  const dismissBtn = document.getElementById("dismissAlert");
+  if (dismissBtn)
+    dismissBtn.addEventListener("click", () => {
+      document.getElementById("critical-overlay").classList.remove("active");
+    });
+
+  // Do an immediate chart refresh then poll every 5 seconds
   await refreshCharts();
   pollingInterval = setInterval(refreshCharts, 5000);
 }
 
 /**
- * Fetches the latest readings and updates all charts
- * Runs immediately on load then every 5 seconds via the polling interval
+ * Fetches the latest readings, updates the chart and the vital cards
  * Called by: initDashboard() and setInterval()
  */
 async function refreshCharts() {
   try {
-    // Get fresh data from the model
     const readings = await getReadings();
 
-    // Pass the data to each chart in the view
-    CHART_CONFIG.forEach(({ id, key }) => updateChart(id, readings, key));
+    // Update the single multi-line chart with all vitals
+    updateChart(readings);
+
+    // Update the vital value cards with the latest reading
+    if (readings.length > 0) {
+      const latest = readings[readings.length - 1];
+      updateVitalCard("val-heart_rate", latest.heart_rate);
+      updateVitalCard("val-blood_pressure", latest.blood_pressure);
+      updateVitalCard("val-temperature_sensor", latest.temperature);
+      updateVitalCard("val-oxygen_sensor", latest.oxygen_saturation);
+      updateVitalCard("val-glucose_monitor", latest.glucose);
+    }
   } catch (err) {
     console.error("Chart refresh failed:", err.message);
   }
 }
 
 /**
- * Handles the simulator start/stop button being clicked
- * Figures out the current state, sends the opposite action, updates the UI
- * Called by: the simulator button click event in initDashboard()
+ * Updates a single vital card value in the DOM
+ * @param {string} elementId - The id of the element to update
+ * @param {number} value     - The value to display
+ * Called by: refreshCharts()
  */
-async function handleSimulatorToggle() {
-  const btn = document.getElementById("simulator-btn");
+function updateVitalCard(elementId, value) {
+  const el = document.getElementById(elementId);
+  if (el) el.textContent = value !== undefined ? value : "--";
+}
 
-  // Check the current state by looking at which CSS class the button has
-  const currentlyRunning = btn?.classList.contains("btn-danger");
-  const action = currentlyRunning ? "stop" : "start";
-
+/**
+ * Handles the simulator start/stop buttons being clicked
+ * @param {"start"|"stop"} action
+ * Called by: startBtn and stopBtn click events
+ */
+async function handleSimulatorToggle(action) {
   try {
     // Tell the model to toggle the simulator
     const isRunning = await toggleSimulator(action);
 
-    // Update the UI to reflect the new state
-    updateSimulatorButton(isRunning);
-    updateStatusIndicator(isRunning);
+    // Update the status indicator in the view
+    updateSimulatorStatus(isRunning);
     showToast(`Simulator ${isRunning ? "started" : "paused"}`);
   } catch (err) {
     showToast("Failed to toggle simulator", "error");
@@ -99,9 +122,9 @@ async function handleSimulatorToggle() {
 }
 
 /**
- * Handles the Sentinel AI analysis button being clicked
- * Shows a loading state then fetches and renders the analysis
- * Called by: the sentinel button click event in initDashboard()
+ * Handles the Sentinel analyse button being clicked
+ * Shows loading state, fetches analysis, renders results
+ * Called by: analyzeBtn click event
  */
 async function handleSentinelRefresh() {
   // Tell the view to show a loading message immediately
@@ -113,15 +136,48 @@ async function handleSentinelRefresh() {
 
     // Pass it to the view to render
     renderSentinelAnalysis(analysis);
+
+    // If the status is critical, show the alert popup
+    if (analysis.overall_status === "critical") {
+      showCriticalAlert(analysis);
+    }
   } catch (err) {
     renderSentinelError(err.message);
   }
 }
 
 /**
+ * Shows the critical alert popup with the analysis data
+ * @param {Object} analysis - The Sentinel analysis object
+ * Called by: handleSentinelRefresh()
+ */
+function showCriticalAlert(analysis) {
+  document.getElementById("alert-summary").textContent = analysis.summary;
+  document.getElementById("alert-recommendation").textContent =
+    analysis.recommendation;
+
+  // Build the list of critical vitals only
+  const vitalsEl = document.getElementById("alert-vitals");
+  vitalsEl.innerHTML = Object.entries(analysis.vitals)
+    .filter(([, v]) => v.status === "critical")
+    .map(
+      ([key, v]) => `
+      <div class="alert-vital-row">
+        <div class="vital-dot"></div>
+        ${key.replace(/_/g, " ")}: ${v.message}
+      </div>
+    `,
+    )
+    .join("");
+
+  // Show the overlay
+  document.getElementById("critical-overlay").classList.add("active");
+}
+
+/**
  * Stops the polling loop
  * Call this if the user navigates away from the dashboard
- * Called by: FrontEnd/main.js (on page unload if needed)
+ * Called by: FrontEnd/main.js on page unload if needed
  */
 export function stopDashboard() {
   if (pollingInterval) clearInterval(pollingInterval);

@@ -5,5 +5,11 @@
 
 import { initDashboard } from "./controllers/dashboardController.js";
 
-// Wait for the DOM to be fully loaded before initialising the dashboard
-document.addEventListener("DOMContentLoaded", initDashboard);
+// DOMContentLoaded may have already fired by the time the module loads
+// so we check if the document is already ready before waiting for the event
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initDashboard);
+} else {
+  // DOM is already ready — call initDashboard immediately
+  initDashboard();
+}
