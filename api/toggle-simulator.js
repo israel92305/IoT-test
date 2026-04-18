@@ -1,42 +1,42 @@
-import { createClient } from "@supabase/supabase-js";
+// api/toggle-simulator.js
+// This is the CONTROLLER for starting and stopping the simulator
+// Its only job is to handle the request and send back the response
+// All database logic for the settings table lives in src/models/settingsModel.js
 
-const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_KEY
-);
+import { getSetting, updateSetting } from "../src/models/settingsModel.js";
 
 export default async function handler(req, res) {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  // Set CORS headers so the frontend can call this endpoint
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-    if (req.method === "OPTIONS") return res.status(200).end();
+  // Handle preflight requests from the browser
+  if (req.method === "OPTIONS") return res.status(200).end();
 
-    if (req.method === "POST") {
-        const { action } = req.body;
-        const isRunning = action === "start" ? "true" : "false";
+  if (req.method === "POST") {
+    // Determine the new value based on the action sent from the frontend
+    const { action } = req.body;
+    const newValue = action === "start" ? "true" : "false";
 
-        const { error } = await supabase
-            .from("settings")
-            .update({ value: isRunning })
-            .eq("key", "simulator_running");
-
-        if (error) return res.status(500).json({ error: error.message });
-
-        return res.status(200).json({ isRunning: isRunning === "true" });
+    try {
+      // Hand off to the model to update the database
+      await updateSetting("simulator_running", newValue);
+      return res.status(200).json({ isRunning: newValue === "true" });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
     }
+  }
 
-    if (req.method === "GET") {
-        const { data, error } = await supabase
-            .from("settings")
-            .select("value")
-            .eq("key", "simulator_running")
-            .single();
-
-        if (error) return res.status(500).json({ error: error.message });
-
-        return res.status(200).json({ isRunning: data.value === "true" });
+  if (req.method === "GET") {
+    try {
+      // Hand off to the model to read from the database
+      const value = await getSetting("simulator_running");
+      return res.status(200).json({ isRunning: value === "true" });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
     }
+  }
 
-    res.status(405).json({ error: "Method not allowed" });
+  res.status(405).json({ error: "Method not allowed" });
 }

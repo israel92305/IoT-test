@@ -1,14 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MedIntel Dashboard</title>
-    <link rel="stylesheet" href="charts/vitalCharts.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
-    <script src="charts/vitalsChart.js" defer></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedIntel Dashboard</title>
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="./style.css">
+
+  <!-- Chart.js from CDN — must load before main.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Main entry point — type="module" enables ES module imports -->
+  <script type="module" src="./main.js"></script>
 </head>
 <body>
-    <div id="chart-container"></div>
+
+  <h1>🏥 MedIntel Dashboard</h1>
+
+  <!-- Top bar — simulator toggle and live status -->
+  <div class="top-bar">
+    <button id="simulator-btn" class="btn-success">▶ Start Simulator</button>
+    <div class="status-indicator">
+      <div id="status-dot"></div>
+      <span id="status-label">Paused</span>
+    </div>
+  </div>
+
+  <!-- Vital sign charts -->
+  <!-- Each canvas ID must match the CHART_CONFIG ids in dashboardController.js -->
+  <div class="charts-grid">
+
+    <div class="chart-card">
+      <h2>Heart Rate</h2>
+      <canvas id="heartRateChart"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <h2>Blood Pressure</h2>
+      <canvas id="bloodPressureChart"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <h2>Temperature</h2>
+      <canvas id="temperatureChart"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <h2>Oxygen Saturation</h2>
+      <canvas id="oxygenChart"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <h2>Glucose</h2>
+      <canvas id="glucoseChart"></canvas>
+    </div>
+
+  </div>
+
+  <!-- Sentinel AI analysis panel -->
+  <div>
+    <div style="display:flex; align-items:center; gap:16px; margin-bottom:12px;">
+      <h2 style="margin:0">🤖 Sentinel AI Analysis</h2>
+      <button id="sentinel-btn" class="btn-success">Run Analysis</button>
+    </div>
+    <div id="sentinel-panel">
+      <p class="sentinel-loading">Press "Run Analysis" to analyse current vitals.</p>
+    </div>
+  </div>
+
 </body>
 </html>

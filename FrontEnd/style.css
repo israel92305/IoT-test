@@ -1,0 +1,124 @@
+/* style.css */
+/* Main stylesheet for the MedIntel Dashboard */
+
+/* ── Reset ── */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ── Base dark medical theme ── */
+body {
+  background: #0d1117;
+  color: #ccc;
+  font-family: 'IBM Plex Sans', sans-serif;
+  padding: 24px;
+}
+
+h1 { color: #00c896; margin-bottom: 24px; }
+h2 { color: #fff; margin-bottom: 12px; font-size: 1rem; }
+
+/* ── Top bar with status indicator and simulator button ── */
+.top-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #555;
+}
+
+#status-dot.status-live   { background: #00c896; }
+#status-dot.status-paused { background: #555; }
+
+/* ── Buttons ── */
+button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-success { background: #00c896; color: #000; }
+.btn-danger  { background: #e74c3c; color: #fff; }
+
+/* ── Chart grid ── */
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.chart-card {
+  background: #161b22;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+/* ── Sentinel panel ── */
+#sentinel-panel {
+  background: #161b22;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 12px;
+}
+
+.sentinel-header {
+  padding-left: 12px;
+  margin-bottom: 16px;
+}
+
+.sentinel-header h3 {
+  font-size: 1.1rem;
+  margin-bottom: 6px;
+}
+
+.sentinel-vital {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #333;
+}
+
+.vital-name   { flex: 1; text-transform: capitalize; }
+.vital-status { font-weight: 700; width: 80px; }
+.vital-msg    { flex: 2; color: #aaa; font-size: 0.9rem; }
+
+.sentinel-recommendation {
+  margin-top: 16px;
+  padding: 12px;
+  background: #1e2530;
+  border-radius: 8px;
+  color: #ccc;
+}
+
+.sentinel-loading { color: #aaa; font-style: italic; }
+.sentinel-error   { color: #e74c3c; }
+
+/* ── Toast notifications ── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  z-index: 999;
+}
+
+.toast-success { background: #00c896; color: #000; }
+.toast-error   { background: #e74c3c; color: #fff; }
