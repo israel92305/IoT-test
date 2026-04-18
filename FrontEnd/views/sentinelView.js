@@ -1,13 +1,10 @@
 // sentinelView.js
-// This is the VIEW responsible for rendering the Sentinel AI results
-// Its only job is to take data and display it in the DOM
-// No fetch calls here — it just receives the analysis and renders it
+// Renders Sentinel AI results using the original HTML element IDs and CSS classes
 
-// Maps status values to colours for visual feedback
 const STATUS_COLORS = {
-  normal: "#00c896",   // green
-  warning: "#f5a623",  // orange
-  critical: "#e74c3c", // red
+  normal:   "#48C9A9",  // green
+  warning:  "#F0A500",  // orange
+  critical: "#E05C6A",  // red
 };
 
 /**
@@ -15,57 +12,98 @@ const STATUS_COLORS = {
  * Called by: FrontEnd/controllers/dashboardController.js
  */
 export function showSentinelLoading() {
-  const panel = document.getElementById("sentinel-panel");
-  if (panel) panel.innerHTML = `<p class="sentinel-loading">Sentinel analysing vitals...</p>`;
+  const summary = document.getElementById("sentinel-summary");
+  if (summary) {
+    summary.style.display = "block";
+    summary.style.color = "#CBD5E1";
+    summary.style.borderColor = "#1E3048";
+    summary.textContent = "Sentinel analysing vitals...";
+  }
+
+  // Clear all individual vital card messages
+  const keys = ["heart_rate", "blood_pressure", "oxygen_saturation", "temperature", "glucose"];
+  keys.forEach(key => {
+    const el = document.getElementById(`msg-${key}`);
+    if (el) el.textContent = "analysing...";
+  });
 }
 
 /**
- * Renders the full Sentinel analysis result into the sentinel panel
+ * Renders the full Sentinel analysis result
+ * Uses the original sentinel-summary bar and vital card msg elements
  * @param {Object} analysis - The object returned from /api/sentinel
  * Called by: FrontEnd/controllers/dashboardController.js
  */
 export function renderSentinelAnalysis(analysis) {
-  const panel = document.getElementById("sentinel-panel");
+  const color = STATUS_COLORS[analysis.overall_status] || "#CBD5E1";
 
-  // If the panel doesn't exist in the HTML, skip
-  if (!panel) return;
+  // Update the sentinel summary bar at the top
+  const summary = document.getElementById("sentinel-summary");
+  if (summary) {
+    summary.style.display = "block";
+    summary.style.color = color;
+    summary.style.borderColor = color;
+    summary.textContent = `${analysis.overall_status.toUpperCase()} — ${analysis.summary} | ${analysis.recommendation}`;
+  }
 
-  // Get the colour for the overall status
-  const color = STATUS_COLORS[analysis.overall_status] || "#ccc";
+  // Update each vital card's sentinel message
+  // Maps Gemini response keys to the HTML msg element IDs
+  const keyMap = {
+    heart_rate:        "msg-heart_rate",
+    blood_pressure:    "msg-blood_pressure",
+    oxygen_saturation: "msg-oxygen_saturation",
+    temperature:       "msg-temperature",
+    glucose:           "msg-glucose",
+  };
 
-  // Build the HTML for each individual vital's status
-  const vitalsHTML = Object.entries(analysis.vitals)
-    .map(([key, v]) => {
-      const vColor = STATUS_COLORS[v.status] || "#ccc";
-      return `
-        <div class="sentinel-vital">
-          <span class="vital-name">${key.replace(/_/g, " ")}</span>
-          <span class="vital-status" style="color:${vColor}">${v.status.toUpperCase()}</span>
-          <span class="vital-msg">${v.message}</span>
-        </div>
-      `;
-    })
-    .join("");
+  Object.entries(analysis.vitals).forEach(([key, v]) => {
+    const elId = keyMap[key];
+    const el = document.getElementById(elId);
+    if (el) {
+      el.textContent = v.message;
+      el.style.color = STATUS_COLORS[v.status] || "rgba(255,255,255,0.4)";
+    }
+  });
 
-  // Inject the full analysis into the panel
-  panel.innerHTML = `
-    <div class="sentinel-header" style="border-left: 4px solid ${color}">
-      <h3>Overall: <span style="color:${color}">${analysis.overall_status.toUpperCase()}</span></h3>
-      <p>${analysis.summary}</p>
-    </div>
-    <div class="sentinel-vitals">${vitalsHTML}</div>
-    <div class="sentinel-recommendation">
-      <strong>Recommendation:</strong> ${analysis.recommendation}
-    </div>
-  `;
+  // Update each vital card border colour based on status
+  const cardKeyMap = {
+    heart_rate:        "val-heart_rate",
+    blood_pressure:    "val-blood_pressure",
+    oxygen_saturation: "val-oxygen_sensor",
+    temperature:       "val-temperature_sensor",
+    glucose:           "val-glucose_monitor",
+  };
+
+  Object.entries(analysis.vitals).forEach(([key, v]) => {
+    const valEl = document.getElementById(cardKeyMap[key]);
+    if (valEl) {
+      const card = valEl.closest(".vital-card");
+      if (card) {
+        const statusColor = STATUS_COLORS[v.status];
+        if (statusColor) {
+          card.style.borderColor = statusColor;
+          card.style.boxShadow = v.status === "critical"
+            ? `0 0 16px rgba(224,92,106,0.4)`
+            : v.status === "warning"
+            ? `0 0 12px rgba(240,165,0,0.3)`
+            : "none";
+        }
+      }
+    }
+  });
 }
 
 /**
- * Shows an error message in the Sentinel panel if something goes wrong
- * @param {string} message - The error message to display
+ * Shows an error message in the sentinel summary bar
+ * @param {string} message
  * Called by: FrontEnd/controllers/dashboardController.js
  */
 export function renderSentinelError(message) {
-  const panel = document.getElementById("sentinel-panel");
-  if (panel) panel.innerHTML = `<p class="sentinel-error">Sentinel error: ${message}</p>`;
+  const summary = document.getElementById("sentinel-summary");
+  if (summary) {
+    summary.style.display = "block";
+    summary.style.color = "#E05C6A";
+    summary.style.borderColor = "#E05C6A";
+    summary.textContent = `Sentinel error: ${message}`;
+  }
 }
